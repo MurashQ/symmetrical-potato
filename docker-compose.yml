@@ -64,8 +64,37 @@ services:
       on-failure
     networks:
       - front_back
+      
+  nginx:
+    image: nginx:1.19.8-alpine
+    depends_on:
+      - frontend
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - /nginx.conf:/etc/nginx/conf
+      - etc-letsencrypt:/etc/letsencrypt
+    networks:
+      -app
+      
+  certbot:
+    image: certbot/certbot
+    depends_on: 
+      - nginx
+    container_name: certbot
+    volumes:
+      - etc-letsencrypt:/etc/letsencrypt
+      - www-html:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --agree-tos --no-eff-email -d "ourdomen"
 
+volumes:
+  www-html:
+  etc-letsencrypt:
 
 networks:
   pgdb:
   front_back:
+  app:
+    driver: bridge
